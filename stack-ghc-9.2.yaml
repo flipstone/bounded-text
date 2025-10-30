@@ -1,0 +1,2 @@
+<<: !include stack-base.yaml
+resolver: lts-20.26

@@ -1,0 +1,1 @@
+<<: !include stack-ghc-9.10.yaml

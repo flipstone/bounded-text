@@ -1,0 +1,151 @@
+name:                bounded-text
+version:             0.1.1.0
+github:              "flipstone/bounded-text"
+license:             BSD3
+author:              "Flipstone Technology Partners, Inc"
+maintainer:          "development@flipstone.com"
+copyright:           "2025 Flipstone Technology Partners, Inc"
+
+extra-source-files:
+  - README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/flipstone/bounded-text#readme>
+tested-with:
+    GHC == 8.10.7, GHC == 9.0.2, GHC == 9.2.8, GHC == 9.4.8, GHC == 9.6.6, GHC == 9.8.4, GHC == 9.10.1, GHC == 9.12.2
+
+flags:
+  ci:
+    description: More strict ghc options used for development and ci, not intended for end-use.
+    manual: true
+    default: false
+
+library:
+  source-dirs: src
+  language: Haskell2010
+  dependencies:
+    - base >= 4.13 && < 5
+    - deepseq >= 1.4 && < 1.7
+    - text >= 1.2 && < 3
+  exposed-modules:
+    - Data.BoundedText
+  when:
+    - condition: flag(ci)
+      then:
+        ghc-options:
+          - -O2
+          - -Wall
+          - -Werror
+          - -Wcompat
+          - -Widentities
+          - -Wmissing-local-signatures
+          - -Wmissing-export-lists
+          - -Wpartial-fields
+          - -Wmissed-specialisations
+          - -Wunused-packages
+          - -Wno-implicit-prelude
+          - -Wno-safe
+          - -Wno-unsafe
+        when:
+          - condition: impl (ghc >= 9.0)
+            ghc-options:
+              - -Winvalid-haddock
+          - condition: impl (ghc <= 9.3)
+            #Previously the guidance was to always used ticked constructors for type constructors,
+            #but that guidance has been reversed, so we turn the warning off in older compilers.
+            ghc-options:
+              - -Wno-unticked-promoted-constructors
+
+          - condition: impl (ghc >= 9.0)
+            ghc-options:
+              - -Winvalid-haddock
+          - condition: impl (ghc >= 9.4)
+            ghc-options:
+              - -Wimplicit-lift
+              - -Woperator-whitespace
+              - -Wredundant-bang-patterns
+              - -Wredundant-strictness-flags
+          - condition: impl (ghc >= 9.6)
+            dependencies:
+              - henforcer
+            ghc-options:
+              - -fplugin Henforcer
+          - condition: impl (ghc >= 9.8)
+            ghc-options:
+              - -Wincomplete-export-warnings
+              - -Wmissing-poly-kind-signatures
+              - -Wterm-variable-capture
+          - condition: impl (ghc >= 9.10)
+            ghc-options:
+              - -Wdefaulted-exception-context
+
+      else:
+        ghc-options:
+          - -O2
+
+tests:
+  bounded-text-test:
+    main: Main.hs
+    source-dirs: test
+    when:
+      - condition: flag(ci)
+        then:
+          ghc-options:
+            - -O2
+            - -Wall
+            - -Werror
+            - -Wcompat
+            - -Widentities
+            - -Wmissing-local-signatures
+            - -Wmissing-export-lists
+            - -Wpartial-fields
+            - -Wmissed-specialisations
+            - -Wno-implicit-prelude
+            - -Wno-safe
+            - -Wno-unsafe
+          when:
+            - condition: impl (ghc >= 9.0)
+              ghc-options:
+                - -Winvalid-haddock
+            - condition: impl (ghc <= 9.3)
+              #Previously the guidance was to always used ticked constructors for type constructors,
+              #but that guidance has been reversed, so we turn the warning off in older compilers.
+              ghc-options:
+                - -Wno-unticked-promoted-constructors
+
+            - condition: impl (ghc >= 9.4)
+              ghc-options:
+                - -Wimplicit-lift
+                - -Woperator-whitespace
+                - -Wredundant-bang-patterns
+                - -Wredundant-strictness-flags
+
+            - condition: impl (ghc >= 9.8)
+              ghc-options:
+                - -Wincomplete-export-warnings
+                - -Wmissing-poly-kind-signatures
+                - -Wterm-variable-capture
+            - condition: impl (ghc >= 9.10)
+              ghc-options:
+                - -Wdefaulted-exception-context
+
+        else:
+          ghc-options:
+            - -threaded
+            - -rtsopts
+            - -with-rtsopts=-N
+            - -Wall
+            - -O2
+
+    dependencies:
+      - base >= 4.14 && < 5
+      - bounded-text
+      - hedgehog
+      - tasty
+      - tasty-hedgehog

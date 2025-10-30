@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -o errexit
+
+. scripts/lib/run-in-container.sh
+
+if [ "$CI" ]; then
+  MODE=check
+else
+  MODE=inplace
+fi
+
+find . -type f | grep -v -e ".stack-work" -e dist-new | grep ".hs" | xargs fourmolu --mode "$MODE"
