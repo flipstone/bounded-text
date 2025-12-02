@@ -2,6 +2,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Data.BoundedText
   ( BoundedText
@@ -11,12 +12,14 @@ module Data.BoundedText
   , boundedTextToText
   , boundedTextMaxLength
   , boundedTextMinLength
+  , boundedTextFromLiteral
   ) where
 
 import qualified Control.DeepSeq as DeepSeq
+import Data.Constraint.Symbol (Length)
 import Data.Proxy (Proxy (Proxy))
 import qualified Data.Text as T
-import GHC.TypeLits (KnownNat, Nat, natVal)
+import GHC.TypeLits (KnownNat, KnownSymbol, Nat, natVal, symbolVal, type (<=))
 
 newtype BoundedText (minLen :: Nat) (maxLen :: Nat) = BoundedText T.Text
   deriving (Eq, Ord, Show)
@@ -71,3 +74,18 @@ boundedTextMaxLength ::
   Int
 boundedTextMaxLength _proxy =
   fromInteger $ natVal (Proxy :: Proxy maxLen)
+
+-- | Convert a type level Symbol to a BoundedText.
+--
+-- You can call this as 'boundedTextFromLiteral @"hello" Proxy' and you don't
+-- have to handle the failure, as you would with 'boundedTextFromText'.
+-- @since 0.1.2.0
+boundedTextFromLiteral ::
+  forall symbol min max.
+    ( KnownSymbol symbol
+    , min <= Length symbol
+    , Length symbol <= max
+    ) =>
+  Proxy symbol ->
+  BoundedText min max
+boundedTextFromLiteral proxy = BoundedText (T.pack $ symbolVal proxy)

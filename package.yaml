@@ -1,5 +1,5 @@
 name:                bounded-text
-version:             0.1.1.0
+version:             0.1.2.0
 github:              "flipstone/bounded-text"
 license:             BSD3
 author:              "Flipstone Technology Partners, Inc"
@@ -31,6 +31,7 @@ library:
   language: Haskell2010
   dependencies:
     - base >= 4.13 && < 5
+    - constraints >= 0.14 && < 0.15
     - deepseq >= 1.4 && < 1.7
     - text >= 1.2 && < 3
   exposed-modules:
@@ -146,6 +147,7 @@ tests:
     dependencies:
       - base >= 4.14 && < 5
       - bounded-text
+      - constraints
       - hedgehog
       - tasty
       - tasty-hedgehog

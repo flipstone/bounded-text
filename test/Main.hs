@@ -2,13 +2,18 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Main
   ( main
   ) where
 
+import Data.Constraint (Dict(Dict), (:-)(Sub))
+import Data.Constraint.Symbol (Length, lengthSymbol)
 import Data.Either (isRight)
 import Data.Proxy (Proxy (Proxy))
+import GHC.TypeLits (KnownNat, KnownSymbol)
 import Hedgehog (Property, forAll, property, withTests, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -29,6 +34,7 @@ main =
       , TastyHH.testProperty "lower bound can be inspected" prop_lowerBoundCanBeInspected
       , TastyHH.testProperty "upper bound will overflow" prop_overflowsUpperBound
       , TastyHH.testProperty "lower bound will overflow" prop_overflowsLowerBound
+      , TastyHH.testProperty "can construct from literal" prop_canConstructFromLiteral
       ]
 
 prop_buildsWithinBounds :: Property
@@ -93,3 +99,12 @@ prop_overflowsLowerBound = withTests 1 . property $ do
     negativeMinBound = Proxy
 
   BoundedText.boundedTextMinLength negativeMinBound === minBound
+
+prop_canConstructFromLiteral :: Property
+prop_canConstructFromLiteral = property $
+  case lengthSymbol :: KnownSymbol "hello" :- KnownNat (Length "hello") of
+    Sub Dict -> do
+      let
+        helloText :: BoundedText.BoundedText 4 6
+        helloText = BoundedText.boundedTextFromLiteral @"hello" Proxy
+      BoundedText.boundedTextToText helloText === "hello"
