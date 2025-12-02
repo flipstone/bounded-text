@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           bounded-text
-version:        0.1.1.0
+version:        0.1.2.0
 description:    Please see the README on GitHub at <https://github.com/flipstone/bounded-text#readme>
 homepage:       https://github.com/flipstone/bounded-text#readme
 bug-reports:    https://github.com/flipstone/bounded-text/issues
@@ -16,7 +16,7 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 tested-with:
-    GHC == 8.10.7, GHC == 9.0.2, GHC == 9.2.8, GHC == 9.4.8, GHC == 9.6.6, GHC == 9.8.4, GHC == 9.10.1, GHC == 9.12.2
+    GHC == 9.2.8, GHC == 9.4.8, GHC == 9.6.6, GHC == 9.8.4, GHC == 9.10.3, GHC == 9.12.2
 extra-source-files:
     README.md
 
@@ -37,7 +37,7 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.13 && <5
+      base >=4.16 && <5
     , deepseq >=1.4 && <1.7
     , text >=1.2 && <3
   default-language: Haskell2010
@@ -70,7 +70,7 @@ test-suite bounded-text-test
   hs-source-dirs:
       test
   build-depends:
-      base >=4.14 && <5
+      base >=4.16 && <5
     , bounded-text
     , hedgehog
     , tasty

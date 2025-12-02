@@ -1,7 +1,12 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Data.BoundedText
   ( BoundedText
@@ -11,12 +16,13 @@ module Data.BoundedText
   , boundedTextToText
   , boundedTextMaxLength
   , boundedTextMinLength
+  , boundedTextFromLiteral
   ) where
 
 import qualified Control.DeepSeq as DeepSeq
 import Data.Proxy (Proxy (Proxy))
 import qualified Data.Text as T
-import GHC.TypeLits (KnownNat, Nat, natVal)
+import GHC.TypeLits (KnownNat, KnownSymbol, Nat, Symbol, UnconsSymbol, natVal, symbolVal, type (+), type (<=))
 
 newtype BoundedText (minLen :: Nat) (maxLen :: Nat) = BoundedText T.Text
   deriving (Eq, Ord, Show)
@@ -71,3 +77,27 @@ boundedTextMaxLength ::
   Int
 boundedTextMaxLength _proxy =
   fromInteger $ natVal (Proxy :: Proxy maxLen)
+
+{- | Convert a type level Symbol to a 'BoundedText'.
+
+You can call this as
+@boundedTextFromLiteral \@"hello"
+@ using TypeApplications and you don't
+have to handle the failure, as you would with 'boundedTextFromText'.
+@since 0.1.2.0
+-}
+boundedTextFromLiteral ::
+  forall symbol min max.
+  ( KnownSymbol symbol
+  , min <= Length symbol
+  , Length symbol <= max
+  ) =>
+  BoundedText min max
+boundedTextFromLiteral = BoundedText (T.pack $ symbolVal (Proxy @symbol))
+
+type family Length (s :: Symbol) :: Nat where
+  Length s = ComputeLength (UnconsSymbol s)
+
+type family ComputeLength (r :: Maybe (Char, Symbol)) :: Nat where
+  ComputeLength Nothing = 0
+  ComputeLength (Just '(c, ts)) = 1 + Length ts

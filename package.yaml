@@ -1,5 +1,5 @@
 name:                bounded-text
-version:             0.1.1.0
+version:             0.1.2.0
 github:              "flipstone/bounded-text"
 license:             BSD3
 author:              "Flipstone Technology Partners, Inc"
@@ -18,7 +18,7 @@ extra-source-files:
 # common to point users to the README.md file.
 description:         Please see the README on GitHub at <https://github.com/flipstone/bounded-text#readme>
 tested-with:
-    GHC == 8.10.7, GHC == 9.0.2, GHC == 9.2.8, GHC == 9.4.8, GHC == 9.6.6, GHC == 9.8.4, GHC == 9.10.1, GHC == 9.12.2
+    GHC == 9.2.8, GHC == 9.4.8, GHC == 9.6.6, GHC == 9.8.4, GHC == 9.10.3, GHC == 9.12.2
 
 flags:
   ci:
@@ -30,7 +30,7 @@ library:
   source-dirs: src
   language: Haskell2010
   dependencies:
-    - base >= 4.13 && < 5
+    - base >= 4.16 && < 5
     - deepseq >= 1.4 && < 1.7
     - text >= 1.2 && < 3
   exposed-modules:
@@ -144,7 +144,7 @@ tests:
             - -O2
 
     dependencies:
-      - base >= 4.14 && < 5
+      - base >= 4.16 && < 5
       - bounded-text
       - hedgehog
       - tasty

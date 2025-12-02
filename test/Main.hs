@@ -2,6 +2,8 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Main
   ( main
@@ -29,6 +31,7 @@ main =
       , TastyHH.testProperty "lower bound can be inspected" prop_lowerBoundCanBeInspected
       , TastyHH.testProperty "upper bound will overflow" prop_overflowsUpperBound
       , TastyHH.testProperty "lower bound will overflow" prop_overflowsLowerBound
+      , TastyHH.testProperty "can construct from literal" prop_canConstructFromLiteral
       ]
 
 prop_buildsWithinBounds :: Property
@@ -93,3 +96,14 @@ prop_overflowsLowerBound = withTests 1 . property $ do
     negativeMinBound = Proxy
 
   BoundedText.boundedTextMinLength negativeMinBound === minBound
+
+prop_canConstructFromLiteral :: Property
+prop_canConstructFromLiteral = property $ do
+  let
+    exactText :: BoundedText.BoundedText 5 5
+    exactText = BoundedText.boundedTextFromLiteral @"exact"
+  BoundedText.boundedTextToText exactText === "exact"
+  let
+    looseText :: BoundedText.BoundedText 1 6
+    looseText = BoundedText.boundedTextFromLiteral @"lt"
+  BoundedText.boundedTextToText looseText === "lt"
