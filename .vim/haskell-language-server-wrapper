@@ -2,4 +2,4 @@
 
 exec docker compose \
   run --rm -T \
-  bounded-text haskell-language-server-wrapper "$@"
+  dev haskell-language-server-wrapper "$@"
