@@ -16,7 +16,7 @@ module Data.BoundedText
   , boundedTextToText
   , boundedTextMaxLength
   , boundedTextMinLength
-  , boundedTextFromLiteral
+  , boundedTextFromSymbol
   ) where
 
 import qualified Control.DeepSeq as DeepSeq
@@ -80,20 +80,23 @@ boundedTextMaxLength _proxy =
 
 {- | Convert a type level Symbol to a 'BoundedText'.
 
-You can call this as
-@boundedTextFromLiteral \@"hello"
-@ using TypeApplications and you don't
-have to handle the failure, as you would with 'boundedTextFromText'.
+This can be called like:
+@
+boundedTextFromSymbol \@"hello"
+@
+
+using TypeApplications which allows avoiding handling errors,
+compared to using 'boundedTextFromText'.
 @since 0.1.2.0
 -}
-boundedTextFromLiteral ::
+boundedTextFromSymbol ::
   forall symbol min max.
   ( KnownSymbol symbol
   , min <= Length symbol
   , Length symbol <= max
   ) =>
   BoundedText min max
-boundedTextFromLiteral = BoundedText (T.pack $ symbolVal (Proxy @symbol))
+boundedTextFromSymbol = BoundedText (T.pack $ symbolVal (Proxy @symbol))
 
 type family Length (s :: Symbol) :: Nat where
   Length s = ComputeLength (UnconsSymbol s)

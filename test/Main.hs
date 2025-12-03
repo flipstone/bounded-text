@@ -31,7 +31,7 @@ main =
       , TastyHH.testProperty "lower bound can be inspected" prop_lowerBoundCanBeInspected
       , TastyHH.testProperty "upper bound will overflow" prop_overflowsUpperBound
       , TastyHH.testProperty "lower bound will overflow" prop_overflowsLowerBound
-      , TastyHH.testProperty "can construct from literal" prop_canConstructFromLiteral
+      , TastyHH.testProperty "can construct from literal" prop_canConstructFromSymbol
       ]
 
 prop_buildsWithinBounds :: Property
@@ -97,13 +97,13 @@ prop_overflowsLowerBound = withTests 1 . property $ do
 
   BoundedText.boundedTextMinLength negativeMinBound === minBound
 
-prop_canConstructFromLiteral :: Property
-prop_canConstructFromLiteral = property $ do
+prop_canConstructFromSymbol :: Property
+prop_canConstructFromSymbol = property $ do
   let
     exactText :: BoundedText.BoundedText 5 5
-    exactText = BoundedText.boundedTextFromLiteral @"exact"
+    exactText = BoundedText.boundedTextFromSymbol @"exact"
   BoundedText.boundedTextToText exactText === "exact"
   let
     looseText :: BoundedText.BoundedText 1 6
-    looseText = BoundedText.boundedTextFromLiteral @"lt"
+    looseText = BoundedText.boundedTextFromSymbol @"lt"
   BoundedText.boundedTextToText looseText === "lt"
