@@ -32,6 +32,7 @@ library:
   dependencies:
     - base >= 4.16 && < 5
     - deepseq >= 1.4 && < 1.7
+    - template-haskell >= 2.18 && < 2.24
     - text >= 1.2 && < 3
   exposed-modules:
     - Data.BoundedText

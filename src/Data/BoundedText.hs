@@ -1,8 +1,10 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -12,20 +14,24 @@ module Data.BoundedText
   ( BoundedText
   , BoundedTextError (..)
   , describeBoundedTextError
+  , boundedTextSafeCoerce
   , boundedTextFromText
   , boundedTextToText
   , boundedTextMaxLength
   , boundedTextMinLength
   , boundedTextFromSymbol
+  , boundedTextQQ
   ) where
 
 import qualified Control.DeepSeq as DeepSeq
 import Data.Proxy (Proxy (Proxy))
 import qualified Data.Text as T
-import GHC.TypeLits (KnownNat, KnownSymbol, Nat, Symbol, UnconsSymbol, natVal, symbolVal, type (+), type (<=))
+import GHC.TypeLits (KnownNat, KnownSymbol, Nat, SomeNat (..), Symbol, UnconsSymbol, natVal, someNatVal, symbolVal, type (+), type (<=))
+import qualified Language.Haskell.TH.Quote as Quote
+import qualified Language.Haskell.TH.Syntax as TH
 
 newtype BoundedText (minLen :: Nat) (maxLen :: Nat) = BoundedText T.Text
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, TH.Lift)
 
 instance DeepSeq.NFData (BoundedText minLen maxLen) where
   rnf (BoundedText t) = DeepSeq.rnf t
@@ -61,6 +67,18 @@ boundedTextFromText str =
 
 boundedTextToText :: BoundedText minLen maxMax -> T.Text
 boundedTextToText (BoundedText txt) = txt
+
+{- | Safely converts a 'BoundedText' into a more lenient 'BoundedText'
+@since 0.1.2.0
+-}
+boundedTextSafeCoerce ::
+  forall minLen1 maxLen1 minLen2 maxLen2.
+  ( minLen2 <= minLen1
+  , maxLen1 <= maxLen2
+  ) =>
+  BoundedText minLen1 maxLen1 ->
+  BoundedText minLen2 maxLen2
+boundedTextSafeCoerce (BoundedText text) = BoundedText text
 
 boundedTextMinLength ::
   forall proxy minLen maxLen.
@@ -104,3 +122,39 @@ type family Length (s :: Symbol) :: Nat where
 type family ComputeLength (r :: Maybe (Char, Symbol)) :: Nat where
   ComputeLength Nothing = 0
   ComputeLength (Just '(c, ts)) = 1 + Length ts
+
+{- | QuasiQuoter for creating a 'BoundedText' where both the min and max length are the
+exact length of the quasi-quoted string.
+
+This can be called like:
+@
+[boundedTextQQ|hello|]
+@
+
+using QuasiQuotes which allows avoiding handling errors,
+compared to using 'boundedTextFromText'.
+@since 0.1.2.0
+-}
+boundedTextQQ :: Quote.QuasiQuoter
+boundedTextQQ =
+  Quote.QuasiQuoter
+    { Quote.quoteExp = \str ->
+        let
+          lenVal = fromIntegral (length str)
+        in
+          case someNatVal lenVal of
+            Just (SomeNat (_ :: Proxy len)) ->
+              case boundedTextFromText @len @len (T.pack str) of
+                Left err -> fail $ describeBoundedTextError err
+                Right bounded -> do
+                  boundedExp <- TH.lift bounded
+                  let
+                    litLen = TH.LitT (TH.NumTyLit lenVal)
+                    -- The signature here is necessary for correctness by enforcing the generated value has the correct bounds
+                    typeSig = TH.AppT (TH.AppT (TH.ConT ''BoundedText) litLen) litLen
+                  pure $ TH.SigE boundedExp typeSig
+            Nothing -> fail "QuasiQuote could not get the length of the string to construct the bounded text"
+    , Quote.quotePat = const $ fail "QuasiQuote patterns not supported for bounded text"
+    , Quote.quoteType = const $ fail "QuasiQuote types not supported for bounded text"
+    , Quote.quoteDec = const $ fail "QuasiQuote Declarations not supported for bounded text"
+    }

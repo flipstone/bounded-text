@@ -39,6 +39,7 @@ library
   build-depends:
       base >=4.16 && <5
     , deepseq >=1.4 && <1.7
+    , template-haskell >=2.18 && <2.24
     , text >=1.2 && <3
   default-language: Haskell2010
   if flag(ci)
