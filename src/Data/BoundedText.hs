@@ -123,8 +123,7 @@ type family ComputeLength (r :: Maybe (Char, Symbol)) :: Nat where
   ComputeLength Nothing = 0
   ComputeLength (Just '(c, ts)) = 1 + Length ts
 
-{- | QuasiQuoter for creating a 'BoundedText' where both the min and max length are the
-exact length of the quasi-quoted string.
+{- | QuasiQuoter for creating a 'BoundedText'.
 
 This can be called like:
 @
@@ -152,7 +151,7 @@ boundedTextQQ =
                     litLen = TH.LitT (TH.NumTyLit lenVal)
                     -- The signature here is necessary for correctness by enforcing the generated value has the correct bounds
                     typeSig = TH.AppT (TH.AppT (TH.ConT ''BoundedText) litLen) litLen
-                  pure $ TH.SigE boundedExp typeSig
+                  pure $ TH.AppE (TH.VarE 'boundedTextSafeCoerce) (TH.SigE boundedExp typeSig)
             Nothing -> fail "QuasiQuote could not get the length of the string to construct the bounded text"
     , Quote.quotePat = const $ fail "QuasiQuote patterns not supported for bounded text"
     , Quote.quoteType = const $ fail "QuasiQuote types not supported for bounded text"

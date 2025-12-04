@@ -118,5 +118,5 @@ prop_canConstructFromQQ = property $ do
   BoundedText.boundedTextToText exactText === "exact"
   let
     looseText :: BoundedText.BoundedText 1 6
-    looseText = BoundedText.boundedTextSafeCoerce [BoundedText.boundedTextQQ|lt|]
+    looseText = [BoundedText.boundedTextQQ|lt|]
   BoundedText.boundedTextToText looseText === "lt"
