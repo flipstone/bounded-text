@@ -30,17 +30,28 @@ import GHC.TypeLits (KnownNat, KnownSymbol, Nat, SomeNat (..), Symbol, UnconsSym
 import qualified Language.Haskell.TH.Quote as Quote
 import qualified Language.Haskell.TH.Syntax as TH
 
+{- | 'BoundedText' is a newtype around 'T.Text' with
+minimum and maximum (inclusive) lengths that are enforced during construction.
+This provides additional type system safety when handling 'T.Text' values that need to be within a certain length.
+@since 0.1.1.0
+-}
 newtype BoundedText (minLen :: Nat) (maxLen :: Nat) = BoundedText T.Text
   deriving (Eq, Ord, Show, TH.Lift)
 
 instance DeepSeq.NFData (BoundedText minLen maxLen) where
   rnf (BoundedText t) = DeepSeq.rnf t
 
+{- | Error type determining how a 'T.Text' value failed to be converted to a 'BoundedText'.
+@since 0.1.1.0
+-}
 data BoundedTextError
   = TextLengthBelowMinimum Integer
   | TextLengthAboveMaximum Integer
   deriving (Eq, Show)
 
+{- | Renders a 'BoundedTextError' as a human readable string.
+@since 0.1.1.0
+-}
 describeBoundedTextError :: BoundedTextError -> String
 describeBoundedTextError err =
   case err of
@@ -49,6 +60,10 @@ describeBoundedTextError err =
 
 type role BoundedText nominal nominal
 
+{- | Converts a 'T.Text' into a 'BoundedText' with the possibility of a
+'Left BoundedTextError' failure describing whether the text is too long or short.
+@since 0.1.1.0
+-}
 boundedTextFromText ::
   forall minLen maxLen.
   (KnownNat minLen, KnownNat maxLen) =>
@@ -65,10 +80,13 @@ boundedTextFromText str =
       (False, _) -> Left $ TextLengthBelowMinimum minVal
       (_, False) -> Left $ TextLengthAboveMaximum maxVal
 
+{- | Converts a 'BoundedText' into a 'T.Text'.
+@since 0.1.1.0
+-}
 boundedTextToText :: BoundedText minLen maxMax -> T.Text
 boundedTextToText (BoundedText txt) = txt
 
-{- | Safely converts a 'BoundedText' into a more lenient 'BoundedText'
+{- | Safely converts a 'BoundedText' into a more lenient 'BoundedText'.
 @since 0.1.2.0
 -}
 boundedTextSafeCoerce ::
@@ -80,23 +98,48 @@ boundedTextSafeCoerce ::
   BoundedText minLen2 maxLen2
 boundedTextSafeCoerce (BoundedText text) = BoundedText text
 
+{- | Get the lower bound for a 'BoundedText'.
+
+This can be called like:
+@
+boundedTextMinLength \@(BoundedText 5 9)
+@
+
+giving a value of 5.
+@since 0.1.2.0
+-}
 boundedTextMinLength ::
-  forall proxy minLen maxLen.
-  KnownNat minLen =>
-  proxy (BoundedText minLen maxLen) ->
+  forall boundedText minLen maxLen.
+  ( KnownNat minLen
+  , boundedText ~ BoundedText minLen maxLen
+  ) =>
   Int
-boundedTextMinLength _proxy =
+boundedTextMinLength =
   fromInteger $ natVal (Proxy :: Proxy minLen)
 
+{- | Get the upper bound for a 'BoundedText'.
+
+This can be called like:
+@
+boundedTextMinLength \@(BoundedText 5 9)
+@
+
+giving a value of 9.
+@since 0.1.2.0
+-}
 boundedTextMaxLength ::
-  forall proxy minLen maxLen.
-  KnownNat maxLen =>
-  proxy (BoundedText minLen maxLen) ->
+  forall boundedText minLen maxLen.
+  ( KnownNat maxLen
+  , boundedText ~ BoundedText minLen maxLen
+  ) =>
   Int
-boundedTextMaxLength _proxy =
+boundedTextMaxLength =
   fromInteger $ natVal (Proxy :: Proxy maxLen)
 
 {- | Convert a type level Symbol to a 'BoundedText'.
+
+This is the recommended and simplest method for
+creating a 'BoundedText' literal at compile time from a known string value.
 
 This can be called like:
 @
@@ -124,6 +167,9 @@ type family ComputeLength (r :: Maybe (Char, Symbol)) :: Nat where
   ComputeLength (Just '(c, ts)) = 1 + Length ts
 
 {- | QuasiQuoter for creating a 'BoundedText'.
+
+It is recommended to use 'boundedTextFromSymbol' instead as it is simpler to use,
+though this function has the advantage of computing the 'T.pack' call at compile time.
 
 This can be called like:
 @
