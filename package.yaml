@@ -33,6 +33,8 @@ library:
     - base >= 4.16 && < 5
     - deepseq >= 1.4 && < 1.7
     - template-haskell >= 2.18 && < 2.24
+    - template-haskell-lift >= 0.1 && < 0.2
+    - template-haskell-quasiquoter >= 0.1 && < 0.2
     - text >= 1.2 && < 3
   exposed-modules:
     - Data.BoundedText

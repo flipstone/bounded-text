@@ -2,9 +2,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -24,11 +25,13 @@ module Data.BoundedText
   ) where
 
 import qualified Control.DeepSeq as DeepSeq
-import Data.Proxy (Proxy (Proxy))
+import Data.Proxy (Proxy)
 import qualified Data.Text as T
-import GHC.TypeLits (KnownNat, KnownSymbol, Nat, SomeNat (..), Symbol, UnconsSymbol, natVal, someNatVal, symbolVal, type (+), type (<=))
-import qualified Language.Haskell.TH.Quote as Quote
-import qualified Language.Haskell.TH.Syntax as TH
+import GHC.Exts (proxy#)
+import GHC.TypeLits (KnownNat, KnownSymbol, Nat, SomeNat (..), Symbol, UnconsSymbol, natVal', someNatVal, symbolVal', type (+), type (<=))
+import qualified Language.Haskell.TH as TH
+import qualified Language.Haskell.TH.Lift as Lift
+import qualified Language.Haskell.TH.QuasiQuoter as Quote
 
 {- | 'BoundedText' is a newtype around 'T.Text' with
 minimum and maximum (inclusive) lengths that are enforced during construction.
@@ -36,7 +39,7 @@ This provides additional type system safety when handling 'T.Text' values that n
 @since 0.1.1.0
 -}
 newtype BoundedText (minLen :: Nat) (maxLen :: Nat) = BoundedText T.Text
-  deriving (Eq, Ord, Show, TH.Lift)
+  deriving (Eq, Ord, Show, Lift.Lift)
 
 instance DeepSeq.NFData (BoundedText minLen maxLen) where
   rnf (BoundedText t) = DeepSeq.rnf t
@@ -71,8 +74,8 @@ boundedTextFromText ::
   Either BoundedTextError (BoundedText minLen maxLen)
 boundedTextFromText str =
   let
-    minVal = natVal (Proxy :: Proxy minLen)
-    maxVal = natVal (Proxy :: Proxy maxLen)
+    minVal = natVal' (proxy# @minLen)
+    maxVal = natVal' (proxy# @maxLen)
     len = toInteger (T.length str)
   in
     case (len >= minVal, len <= maxVal) of
@@ -115,7 +118,7 @@ boundedTextMinLength ::
   ) =>
   Int
 boundedTextMinLength =
-  fromInteger $ natVal (Proxy :: Proxy minLen)
+  fromInteger $ natVal' (proxy# @minLen)
 
 {- | Get the upper bound for a 'BoundedText'.
 
@@ -134,7 +137,7 @@ boundedTextMaxLength ::
   ) =>
   Int
 boundedTextMaxLength =
-  fromInteger $ natVal (Proxy :: Proxy maxLen)
+  fromInteger $ natVal' (proxy# @maxLen)
 
 {- | Convert a type level Symbol to a 'BoundedText'.
 
@@ -157,7 +160,7 @@ boundedTextFromSymbol ::
   , Length symbol <= max
   ) =>
   BoundedText min max
-boundedTextFromSymbol = BoundedText (T.pack $ symbolVal (Proxy @symbol))
+boundedTextFromSymbol = BoundedText (T.pack $ symbolVal' (proxy# @symbol))
 
 type family Length (s :: Symbol) :: Nat where
   Length s = ComputeLength (UnconsSymbol s)
@@ -182,7 +185,7 @@ compared to using 'boundedTextFromText'.
 -}
 boundedTextQQ :: Quote.QuasiQuoter
 boundedTextQQ =
-  Quote.QuasiQuoter
+  (Quote.namedDefaultQuasiQuoter "boundedTextQQ")
     { Quote.quoteExp = \str ->
         let
           lenVal = fromIntegral (length str)
@@ -192,14 +195,11 @@ boundedTextQQ =
               case boundedTextFromText @len @len (T.pack str) of
                 Left err -> fail $ describeBoundedTextError err
                 Right bounded -> do
-                  boundedExp <- TH.lift bounded
+                  boundedExp <- Lift.lift bounded
                   let
                     litLen = TH.LitT (TH.NumTyLit lenVal)
                     -- The signature here is necessary for correctness by enforcing the generated value has the correct bounds
                     typeSig = TH.AppT (TH.AppT (TH.ConT ''BoundedText) litLen) litLen
                   pure $ TH.AppE (TH.VarE 'boundedTextSafeCoerce) (TH.SigE boundedExp typeSig)
             Nothing -> fail "QuasiQuote could not get the length of the string to construct the bounded text"
-    , Quote.quotePat = const $ fail "QuasiQuote patterns not supported for bounded text"
-    , Quote.quoteType = const $ fail "QuasiQuote types not supported for bounded text"
-    , Quote.quoteDec = const $ fail "QuasiQuote Declarations not supported for bounded text"
     }

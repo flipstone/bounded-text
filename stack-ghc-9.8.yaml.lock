@@ -22,6 +22,20 @@ packages:
       size: 1182
   original:
     hackage: pollock-0.1.0.3
+- completed:
+    hackage: template-haskell-lift-0.1.0.0@sha256:f6cd3ee45b0c68480c400bfca9f08f39e8e87a5eb823f206dbe06ab1923a4f1c,1136
+    pantry-tree:
+      sha256: 56ab994094c839bebb643ce5fc58dfae6269517ebe91f380e259adaf1def08bf
+      size: 243
+  original:
+    hackage: template-haskell-lift-0.1.0.0
+- completed:
+    hackage: template-haskell-quasiquoter-0.1.0.0@sha256:71027c432c0fb1a293d0f2b1d46dd5be42b9703b7c4b2233ea8076bfc6f84aae,1181
+    pantry-tree:
+      sha256: f9f5177a522cc273c001dd5bd749e4f7ed841910c6136711b9b9825bc0bc9c56
+      size: 257
+  original:
+    hackage: template-haskell-quasiquoter-0.1.0.0
 snapshots:
 - completed:
     sha256: 9444fadfa30b67a93080254d53872478c087592ad64443e47c546cdcd13149ae

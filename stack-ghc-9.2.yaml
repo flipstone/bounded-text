@@ -1,2 +1,5 @@
 <<: !include stack-base.yaml
 resolver: lts-20.26
+extra-deps:
+  - template-haskell-lift-0.1.0.0
+  - template-haskell-quasiquoter-0.1.0.0
