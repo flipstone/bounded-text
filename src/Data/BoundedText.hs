@@ -194,12 +194,13 @@ boundedTextQQ =
             Just (SomeNat (_ :: Proxy len)) ->
               case boundedTextFromText @len @len (T.pack str) of
                 Left err -> fail $ describeBoundedTextError err
-                Right bounded -> do
-                  boundedExp <- Lift.lift bounded
+                Right bounded ->
                   let
                     litLen = TH.LitT (TH.NumTyLit lenVal)
                     -- The signature here is necessary for correctness by enforcing the generated value has the correct bounds
                     typeSig = TH.AppT (TH.AppT (TH.ConT ''BoundedText) litLen) litLen
-                  pure $ TH.AppE (TH.VarE 'boundedTextSafeCoerce) (TH.SigE boundedExp typeSig)
+                    applyCoerce boundedExp = TH.AppE (TH.VarE 'boundedTextSafeCoerce) (TH.SigE boundedExp typeSig)
+                  in
+                    fmap applyCoerce $ Lift.lift bounded
             Nothing -> fail "QuasiQuote could not get the length of the string to construct the bounded text"
     }
