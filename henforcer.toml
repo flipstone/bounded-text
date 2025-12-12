@@ -14,5 +14,5 @@ pattern = "Paths_*"
 all = true
 [[forSpecifiedModules]]
 module = "Data.BoundedText"
-maximumExportsPlusHeaderUndocumented = 7
-maximumExportsWithoutSince = 7
+maximumExportsPlusHeaderUndocumented = 0
+maximumExportsWithoutSince = 0
