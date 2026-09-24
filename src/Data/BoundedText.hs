@@ -39,7 +39,7 @@ This provides additional type system safety when handling 'T.Text' values that n
 @since 0.1.1.0
 -}
 newtype BoundedText (minLen :: Nat) (maxLen :: Nat) = BoundedText T.Text
-  deriving (Eq, Ord, Show, Lift.Lift)
+  deriving (Eq, Lift.Lift, Ord, Show)
 
 instance DeepSeq.NFData (BoundedText minLen maxLen) where
   rnf (BoundedText t) = DeepSeq.rnf t
